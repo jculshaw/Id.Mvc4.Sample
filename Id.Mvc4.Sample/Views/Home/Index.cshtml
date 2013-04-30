@@ -1,0 +1,173 @@
+﻿@model Id.Mvc4.Sample.ViewModels.SearchCriteria
+@{
+    ViewBag.Title = "Home Page";
+}
+@section featured {
+    <section class="featured">
+        <div class="content-wrapper">
+            <hgroup class="title">
+                <h2>Search Books</h2>            
+            </hgroup>
+        </div>
+    </section>
+}
+
+@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { @Id = "SearchForm" }))
+{
+    <fieldset id="search">
+        <legend>Search Criteria</legend>
+        <div>
+            <div class="searchOption">
+                @Html.LabelFor(model => model.Title)
+                @Html.EditorFor(model => model.Title)
+            </div>
+            <div class="searchOption">
+                @Html.LabelFor(model => model.FormatId)
+                @Html.DropDownList("FormatId", "All Formats")
+            </div>
+        </div>
+        <div>
+            <div class="searchOption">
+                @Html.LabelFor(model => model.Author)
+                @Html.EditorFor(model => model.Author)
+            </div>
+            <div class="searchOption">
+                @Html.LabelFor(model => model.SubjectId)
+                @Html.DropDownList("SubjectId", "All Subjects")
+            </div>
+            <div class="searchOption">
+                <input type="hidden" id="StartIndex" value="1" />
+                <input type="button" id="Search" title="Search" value="Search" />&nbsp;<img src="@Url.Content("~/Content/themes/base/images/busy.gif")" alt="Please wait..." title="Please wait..." id="waitImage" height="22" width="22" style="display: none;" />
+            </div>
+        </div>
+    </fieldset>
+}
+
+<div id="resultsTableHolder">
+
+</div>
+
+<script id="resultsTable" type="text/html">
+    <table>
+        <tr>
+            <th>
+                Title
+            </th>
+            <th>
+                Authors
+            </th>
+            <th>
+                Price
+            </th>
+            <th>
+                Isbn
+            </th>
+            <th>
+                Publication Date
+            </th>
+            <th>
+                Format
+            </th>
+            <th>
+                Subject
+            </th>
+        </tr>
+    {{#each book}}
+        <tr>
+            <td>
+                {{Title}}
+            </td>
+            <td>
+                <ul>
+                {{#each Authors}}
+                    <li>{{Name}}</li>
+                {{/each}}       
+                </ul>
+            </td>
+            <td>
+                {{Price}}
+            </td>
+            <td>
+                {{Isbn}}
+            </td>
+            <td>
+                {{PublicationDate}}
+            </td>
+            <td>
+                {{Format.Name}}
+            </td>
+            <td>
+                {{Subject.Name}}
+            </td>
+        </tr>
+    {{/each}}
+    </table>
+</script>
+
+
+@section Scripts {
+
+    <script src="~/Scripts/handlebars.js"></script>
+
+    <script type="text/javascript">
+
+        var searchServer = (function() {
+
+            var searchApiUrl = '@Url.Content("~/api/search/?")';
+
+            $(document).ajaxError(function(event, xhr) {
+                alert(xhr.status + ":" + xhr.statusText);
+            });
+
+            var search = function(searchCriteria) {
+                return $.ajax(searchApiUrl + searchCriteria);
+            };
+
+            return {
+                search: search
+            };
+
+        }());
+
+        (function() {
+
+            var templates = {};
+            var results = null;
+
+            var searchForm = null;
+            var resultsDisplayHolder = null;
+            
+            var compileTemplates = function() {
+                templates.resultsTable = Handlebars.compile($("#resultsTable").html());
+            };
+
+            var showResults = function(data) {
+                results = data;
+                var output = templates.resultsTable({ book: data });
+                resultsDisplayHolder.html(output);
+            };
+
+            $(function() {
+
+                compileTemplates();
+
+                $(document).ajaxStart(function() {
+                    $("#waitImage").show();
+                }).ajaxStop(function() {
+                    $("#waitImage").hide();
+                });
+
+                searchForm = $("#SearchForm");
+                resultsDisplayHolder = $("#resultsTableHolder");
+                
+                $("#Search").click(function () {
+                    var searchCriteria = searchForm.serialize();
+                    searchServer.search(searchCriteria).done(showResults);
+                    return false;
+                });
+            });
+
+        }());
+
+    </script>
+}

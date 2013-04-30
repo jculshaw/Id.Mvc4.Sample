@@ -1,0 +1,15 @@
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
+
+namespace Id.Mvc4.Sample.Models
+{
+    public class Author
+    {
+        public int AuthorId { get; set; }
+        public string Name { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<Book> Books { get; set; }
+    }
+
+}
